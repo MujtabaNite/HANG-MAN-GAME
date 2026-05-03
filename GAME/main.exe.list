@@ -1,0 +1,1087 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+main.exe -- emu8086 assembler version: 4.08  
+ 
+[ 6/22/2025  --  8:52:58 PM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       .MODEL SMALL
+[   2]        :                                       .STACK 100H
+[   3]        :                                       
+[   4]        :                                       
+[   5]        :                                       .DATA
+[   6]        :                                       ; ==============================
+[   7]        :                                       ;  HANGMAN SPRITES (8x8 each)
+[   8]        :                                       ; ==============================
+[   9]        :                                       
+[  10]    0100: F0 F0 F0 F0                           hang_ve     db 11110000b, 11110000b, 11110000b, 11110000b
+[  11]    0104: F0 F0 F0 F0 24                        db 11110000b, 11110000b, 11110000b, 11110000b, "$"   ; Vertical beam
+[  12]        :                                       
+[  13]    0109: 00 00 00 00                           hang_ho     db 00000000b, 00000000b, 00000000b, 00000000b
+[  14]    010D: FF FF FF FF 24                        db 11111111b, 11111111b, 11111111b, 11111111b, "$"   ; Horizontal beam
+[  15]        :                                       
+[  16]    0112: 18 18 18 18                           rope        db 00011000b, 00011000b, 00011000b, 00011000b
+[  17]    0116: 18 18 18 18 24                        db 00011000b, 00011000b, 00011000b, 00011000b, "$"   ; Rope
+[  18]        :                                       
+[  19]    011B: 18 3C 42 A5                           head        db 00011000b, 00111100b, 01000010b, 10100101b
+[  20]    011F: 81 42 3C 18 24                        db 10000001b, 01000010b, 00111100b, 00011000b, "$"   ; Head
+[  21]        :                                       
+[  22]    0124: 3C 3C 3C 3C                           body_1      db 00111100b, 00111100b, 00111100b, 00111100b
+[  23]    0128: 3C 3C 3C 3C 24                        db 00111100b, 00111100b, 00111100b, 00111100b, "$"   ; Body stage 1 (simple)
+[  24]        :                                       
+[  25]    012D: 3C FC BC BC                           body_2      db 00111100b, 11111100b, 10111100b, 10111100b
+[  26]    0131: BC BC BC 3C 24                        db 10111100b, 10111100b, 10111100b, 00111100b, "$"   ; Body stage 2 (detailed)
+[  27]        :                                       
+[  28]    0136: 3C FF BD BD                           body_3      db 00111100b, 11111111b, 10111101b, 10111101b
+[  29]    013A: BD BD BD 3C 24                        db 10111101b, 10111101b, 10111101b, 00111100b, "$"   ; Body stage 3 (fully detailed)
+[  30]        :                                       
+[  31]    013F: 60 60 60 60                           leg_1       db 01100000b, 01100000b, 01100000b, 01100000b
+[  32]    0143: 60 60 60 E0 24                        db 01100000b, 01100000b, 01100000b, 11100000b, "$"   ; Left leg
+[  33]        :                                       
+[  34]    0148: 66 66 66 66                           leg_2       db 01100110b, 01100110b, 01100110b, 01100110b
+[  35]    014C: 66 66 66 E7 24                        db 01100110b, 01100110b, 01100110b, 11100111b, "$"   ; Both legs
+[  36]        :                                       
+[  37]        :                                       
+[  38]        :                                       ; ===========================
+[  39]        :                                       ;  POSITION TRACKERS
+[  40]        :                                       ; ===========================
+[  41]        :                                       
+[  42]    0151: 00 00                                 line                dw 0           ; Y position for drawing sprites
+[  43]    0153: 00 00                                 column_a            dw 0           ; X position for drawing sprites
+[  44]        :                                       
+[  45]        :                                       
+[  46]        :                                       ; ==============================
+[  47]        :                                       ;  LETTER BITMAPS (A-Z, 8x8)
+[  48]        :                                       ; ==============================
+[  49]        :                                       
+[  50]    0155: 0C 1E 33 33 3F 33 33 00 24            letter_a    db 0x0C, 0x1E, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x00, "$"
+[  51]    015E: FC 66 66 7C 66 66 FC 00 24            letter_b    db 0xFC, 0x66, 0x66, 0x7C, 0x66, 0x66, 0xFC, 0x00, "$"
+[  52]    0167: 3C 66 C0 C0 C0 66 3C 00 24            letter_c    db 0x3C, 0x66, 0xC0, 0xC0, 0xC0, 0x66, 0x3C, 0x00, "$"
+[  53]    0170: F8 6C 66 66 66 6C F8 00 24            letter_d    db 0xF8, 0x6C, 0x66, 0x66, 0x66, 0x6C, 0xF8, 0x00, "$"
+[  54]    0179: FE 62 68 78 68 62 FE 00 24            letter_e    db 0xFE, 0x62, 0x68, 0x78, 0x68, 0x62, 0xFE, 0x00, "$"
+[  55]    0182: FE 62 68 78 68 60 F0 00 24            letter_f    db 0xFE, 0x62, 0x68, 0x78, 0x68, 0x60, 0xF0, 0x00, "$"
+[  56]    018B: 3C 66 C0 C0 CE 66 3E 00 24            letter_g    db 0x3C, 0x66, 0xC0, 0xC0, 0xCE, 0x66, 0x3E, 0x00, "$"
+[  57]    0194: 33 33 33 3F 33 33 33 00 24            letter_h    db 0x33, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x33, 0x00, "$"
+[  58]    019D: 3C 18 18 18 18 18 3C 00 24            letter_i    db 0x3C, 0x18, 0x18, 0x18, 0x18, 0x18, 0x3C, 0x00, "$"
+[  59]    01A6: 1E 0C 0C 0C CC CC 78 00 24            letter_j    db 0x1E, 0x0C, 0x0C, 0x0C, 0xCC, 0xCC, 0x78, 0x00, "$"
+[  60]    01AF: E6 66 6C 78 6C 66 E6 00 24            letter_k    db 0xE6, 0x66, 0x6C, 0x78, 0x6C, 0x66, 0xE6, 0x00, "$"
+[  61]    01B8: F0 60 60 60 62 66 FE 00 24            letter_l    db 0xF0, 0x60, 0x60, 0x60, 0x62, 0x66, 0xFE, 0x00, "$"
+[  62]    01C1: 63 77 7F 7F 6B 63 63 00 24            letter_m    db 0x63, 0x77, 0x7F, 0x7F, 0x6B, 0x63, 0x63, 0x00, "$"
+[  63]    01CA: C6 E6 F6 DE CE C6 C6 00 24            letter_n    db 0xC6, 0xE6, 0xF6, 0xDE, 0xCE, 0xC6, 0xC6, 0x00, "$"
+[  64]    01D3: 1C 36 63 63 63 36 1C 00 24            letter_o    db 0x1C, 0x36, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00, "$"
+[  65]    01DC: FC 66 66 7C 60 60 F0 00 24            letter_p    db 0xFC, 0x66, 0x66, 0x7C, 0x60, 0x60, 0xF0, 0x00, "$"
+[  66]    01E5: 78 CC CC CC DC 78 1C 00 24            letter_q    db 0x78, 0xCC, 0xCC, 0xCC, 0xDC, 0x78, 0x1C, 0x00, "$"
+[  67]    01EE: FC 66 66 7C 6C 66 E6 00 24            letter_r    db 0xFC, 0x66, 0x66, 0x7C, 0x6C, 0x66, 0xE6, 0x00, "$"
+[  68]    01F7: 78 CC E0 70 1C CC 78 00 24            letter_s    db 0x78, 0xCC, 0xE0, 0x70, 0x1C, 0xCC, 0x78, 0x00, "$"
+[  69]    0200: 3F 2D 0C 0C 0C 0C 1E 00 24            letter_t    db 0x3F, 0x2D, 0x0C, 0x0C, 0x0C, 0x0C, 0x1E, 0x00, "$"
+[  70]    0209: 33 33 33 33 33 33 3F 00 24            letter_u    db 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x3F, 0x00, "$"
+[  71]    0212: 33 33 33 33 33 1E 0C 00 24            letter_v    db 0x33, 0x33, 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x00, "$"
+[  72]    021B: 63 63 63 6B 7F 77 63 00 24            letter_w    db 0x63, 0x63, 0x63, 0x6B, 0x7F, 0x77, 0x63, 0x00, "$"
+[  73]    0224: 63 63 36 1C 1C 36 63 00 24            letter_x    db 0x63, 0x63, 0x36, 0x1C, 0x1C, 0x36, 0x63, 0x00, "$"
+[  74]    022D: 33 33 33 1E 0C 0C 1E 00 24            letter_y    db 0x33, 0x33, 0x33, 0x1E, 0x0C, 0x0C, 0x1E, 0x00, "$"
+[  75]    0236: FE C6 8C 18 32 66 FE 00 24            letter_z    db 0xFE, 0xC6, 0x8C, 0x18, 0x32, 0x66, 0xFE, 0x00, "$"
+[  76]        :                                       
+[  77]        :                                       
+[  78]        :                                       ; ======================================
+[  79]        :                                       ;  SUPPORT SPRITES / CHARACTERS
+[  80]        :                                       ; ======================================
+[  81]        :                                       
+[  82]    023F: 00 30 30 00 00 30 30 00 24            str_colon              db 0x00, 0x30, 0x30, 0x00, 0x00, 0x30, 0x30, 0x00, "$"
+[  83]    0248: 18 3C 3C 18 18 00 18 00 24            exclamation_mark       db 0x18, 0x3C, 0x3C, 0x18, 0x18, 0x00, 0x18, 0x00, "$"
+[  84]    0251: 00 00 00 00 00 00 00 00 24            space_line             db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, "$"
+[  85]    025A: FF                                    str_line               db 11111111b
+[  86]    025B: 00                                    str_empty              db 00000000b
+[  87]        :                                       
+[  88]        :                                       
+[  89]        :                                       ; =====================================
+[  90]        :                                       ;  GAME LOGIC VARIABLES & MESSAGES
+[  91]        :                                       ; =====================================
+[  92]        :                                       
+[  93]    025C: 48 45 4C 4C 4F 20 57 4F 52 4C 44 24   str_word               db "HELLO WORLD$"         ; Word to guess
+                                                    
+[  94]    0268: 00                                    size_none              db 0                      ; Total letters in word
+[  95]    0269: 00                                    size_none_minor        db 0                      ; Count of non-space letters
+[  96]    026A: 00                                    mistakes               db 0                      ; Mistake counter
+[  97]    026B: 00                                    success_guess_counter  db 0                      ; Correct guesses made
+[  98]    026C: 24 24 24 24 24 24 24 24 24 24 24 24   str_guess              db 26 dup("$")            ; Guessed letters
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24                               
+[  99]        :                                       
+[ 100]    0286: 41 42 43 44 45 46 47 48 49 4A 4B 4C   alphabet_validation    db "ABCDEFGHIJKLMNOPQRSTUVWXYZ$"   ; Valid inputs
+                4D 4E 4F 50 51 52 53 54 55 56 57 58 
+                59 5A 24                            
+[ 101]        :                                       
+[ 102]        :                                       ;  Messages
+[ 103]    02A1: 54 48 45 20 48 41 4E 47 4D 41 4E 20   msg_top                dw "THE HANGMAN GAME$"
+                47 41 4D 45 24 00                   
+[ 104]    02B3: 50 52 45 53 53 20 41 4E 59 20 4B 45   msg_restart            dw "PRESS ANY KEY$"
+                59 24                               
+[ 105]    02C1: 59 4F 55 20 57 4F 4E 24               msg_won                dw "YOU WON$"
+[ 106]    02C9: 59 4F 55 20 4C 4F 53 45 24 00         msg_lost               dw "YOU LOSE$"
+[ 107]    02D3: 41 4C 52 45 41 44 59 20 47 55 45 53   already_guessed        dw "ALREADY GUESSED$"
+                53 45 44 24                         
+[ 108]    02E3: 49 4E 56 41 4C 49 44 20 43 48 41 52   invalid_char           dw "INVALID CHARACTER$"
+                41 43 54 45 52 24                   
+[ 109]        :                                       
+[ 110]        :                                       ;  Letter reference table (A-Z)
+[ 111]    02F5: 55 00 5E 00 67 00 70 00 79 00 82 00   alphabet               dw letter_a, letter_b, letter_c, letter_d, letter_e, letter_f
+                                                    
+[ 112]    0301: 8B 00 94 00 9D 00 A6 00 AF 00 B8 00   dw letter_g, letter_h, letter_i, letter_j, letter_k, letter_l
+                                                    
+[ 113]    030D: C1 00 CA 00 D3 00 DC 00 E5 00 EE 00   dw letter_m, letter_n, letter_o, letter_p, letter_q, letter_r
+                                                    
+[ 114]    0319: F7 00 00 01 09 01 12 01 1B 01 24 01   dw letter_s, letter_t, letter_u, letter_v, letter_w, letter_x
+                                                    
+[ 115]    0325: 2D 01 36 01 24 00                     dw letter_y, letter_z, "$"
+[ 116]        :                                       
+[ 117]        :                                       ;  Index helpers
+[ 118]    032B: 00 00                                 alplhabet_index        dw 0
+[ 119]    032D: 00 00                                 index_str_word         dw 0
+[ 120]        :                                       
+[ 121]        :                                       ;  Memory placeholder for rendered string display
+[ 122]    032F: 00                                    str_lines              db ?                      ; Output version of str_word with guessed letters filled
+[ 123]        :                                       
+[ 124]        :                                       
+[ 125]        :                                       
+[ 126]        :                                       ; ========================================================================
+[ 127]        :                                       ; HANGMAN GAME - MODULARIZED VERSION
+[ 128]        :                                       ; ========================================================================
+[ 129]        :                                       ; This is a complete hangman game implementation in x86 assembly language
+[ 130]        :                                       ; The game displays a gallows, manages word guessing, and tracks mistakes
+[ 131]        :                                       ; ========================================================================
+[ 132]        :                                       
+[ 133]        :                                       code segment
+[ 134]    0330:                                       start:
+[ 135]        :                                       ; Initialize data and extra segments
+[ 136]    0330: B8 10 00                              mov ax, data            ; Load data segment address into AX
+[ 137]    0333: 8E D8                                 mov ds, ax              ; Set DS to point to data segment
+[ 138]    0335: 8E C0                                 mov es, ax              ; Set ES to point to data segment
+[ 139]        :                                       
+[ 140]        :                                       ; Set graphics mode (320x200, 256 colors)
+[ 141]    0337: B4 00                                 mov ah, 0               ; BIOS video function: set video mode
+[ 142]    0339: B0 0D                                 mov al, 0dh             ; Video mode 13h (320x200, 256 colors)
+[ 143]    033B: CD 10                                 int 10h                 ; Call BIOS video interrupt
+[ 144]        :                                       
+[ 145]        :                                       ; Set ES to point to video memory
+[ 146]    033D: BE 00 A0                              mov si, 0a000h          ; Video memory segment address
+[ 147]    0340: 8E C6                                 mov es, si              ; Point ES to video memory
+[ 148]        :                                       
+[ 149]    0342: EB 00                                 jmp the_beginning       ; Jump to main game initialization
+[ 150]        :                                       
+[ 151]        :                                       ; ========================================================================
+[ 152]        :                                       ; PROCEDURE: GAME_INITIALIZATION
+[ 153]        :                                       ; Description: Initializes all game variables and starts the main game loop
+[ 154]        :                                       ; Input: None
+[ 155]        :                                       ; Output: None
+[ 156]        :                                       ; Modifies: AX, BX, CX, DX, SI, DI
+[ 157]        :                                       ; ========================================================================
+[ 158]    0344:                                       the_beginning:
+[ 159]        :                                       ; Clear all general-purpose registers
+[ 160]    0344: 33 DB                                 xor bx, bx              ; Clear BX register
+[ 161]    0346: 33 C0                                 xor ax, ax              ; Clear AX register
+[ 162]    0348: 33 C9                                 xor cx, cx              ; Clear CX register
+[ 163]    034A: 33 D2                                 xor dx, dx              ; Clear DX register
+[ 164]    034C: 33 F6                                 xor si, si              ; Clear SI register
+[ 165]    034E: 33 FF                                 xor di, di              ; Clear DI register
+[ 166]        :                                       
+[ 167]        :                                       ; Initialize game variables
+[ 168]    0350: C6 06 6A 01 00                        mov mistakes, 0                     ; Reset mistake counter to 0
+[ 169]    0355: C6 06 6B 01 00                        mov success_guess_counter, 0        ; Reset successful guess counter
+[ 170]        :                                       
+[ 171]        :                                       ; Set initial drawing position for gallows
+[ 172]    035A: C7 06 53 00 02 00                     mov column_a, 2         ; Starting column position
+[ 173]    0360: C7 06 51 00 09 00                     mov line, 9             ; Starting line position
+[ 174]        :                                       
+[ 175]    0366: EB 00                                 jmp shows_hang_vertical ; Jump to gallows drawing routine
+[ 176]        :                                       
+[ 177]        :                                       ; ========================================================================
+[ 178]        :                                       ; PROCEDURE: DRAW_VERTICAL_GALLOWS
+[ 179]        :                                       ; Description: Draws the vertical part of the gallows structure
+[ 180]        :                                       ; Input: BL (counter), line, column_a (position variables)
+[ 181]        :                                       ; Output: Vertical gallows displayed on screen
+[ 182]        :                                       ; Modifies: BL, SI, line
+[ 183]        :                                       ; ========================================================================
+[ 184]    0368:                                       shows_hang_vertical:
+[ 185]    0368: BE 00 00                              lea si, hang_ve         ; Load address of vertical hangman character
+[ 186]        :                                       
+[ 187]    036B: 80 FB 08                              cmp bl, 8               ; Check if we've drawn 8 vertical lines
+[ 188]    036E: 74 0B                                 je shows_hang_horizontal ; If yes, move to horizontal part
+[ 189]        :                                       
+[ 190]    0370: E8 52 04                              call shows_letter       ; Display the vertical character
+[ 191]        :                                       
+[ 192]    0373: FE C3                                 inc bl                  ; Increment counter
+[ 193]    0375: FF 06 51 00                           inc line                ; Move to next line
+[ 194]    0379: EB ED                                 jmp shows_hang_vertical ; Continue drawing vertical lines
+[ 195]        :                                       
+[ 196]        :                                       ; ========================================================================
+[ 197]        :                                       ; PROCEDURE: DRAW_HORIZONTAL_GALLOWS
+[ 198]        :                                       ; Description: Draws the horizontal part of the gallows structure
+[ 199]        :                                       ; Input: BX (counter), line, column_a (position variables)
+[ 200]        :                                       ; Output: Horizontal gallows displayed on screen
+[ 201]        :                                       ; Modifies: BX, SI, column_a, line
+[ 202]        :                                       ; ========================================================================
+[ 203]    037B:                                       shows_hang_horizontal:
+[ 204]    037B: BB 00 00                              mov bx, 0               ; Reset counter for horizontal drawing
+[ 205]    037E: C7 06 53 00 02 00                     mov column_a, 2         ; Reset column position
+[ 206]    0384: C7 06 51 00 09 00                     mov line, 9             ; Reset line position
+[ 207]        :                                       
+[ 208]    038A:                                       repeat_hang_horizontal:
+[ 209]    038A: BE 09 00                              lea si, hang_ho         ; Load address of horizontal hangman character
+[ 210]        :                                       
+[ 211]    038D: 80 FB 04                              cmp bl, 4               ; Check if we've drawn 4 horizontal characters
+[ 212]    0390: 74 0B                                 je shows_rope           ; If yes, move to rope drawing
+[ 213]        :                                       
+[ 214]    0392: E8 30 04                              call shows_letter       ; Display the horizontal character
+[ 215]        :                                       
+[ 216]    0395: FE C3                                 inc bl                  ; Increment counter
+[ 217]    0397: FF 06 53 00                           inc column_a            ; Move to next column
+[ 218]    039B: EB ED                                 jmp repeat_hang_horizontal ; Continue drawing horizontal lines
+[ 219]        :                                       
+[ 220]        :                                       ; ========================================================================
+[ 221]        :                                       ; PROCEDURE: DRAW_ROPE
+[ 222]        :                                       ; Description: Draws the hanging rope part of the gallows
+[ 223]        :                                       ; Input: None
+[ 224]        :                                       ; Output: Rope displayed at specified position
+[ 225]        :                                       ; Modifies: column_a, line, SI
+[ 226]        :                                       ; ========================================================================
+[ 227]    039D:                                       shows_rope:
+[ 228]    039D: C7 06 53 00 05 00                     mov column_a, 5         ; Set rope column position
+[ 229]    03A3: C7 06 51 00 0A 00                     mov line, 10            ; Set rope line position
+[ 230]    03A9: BE 12 00                              lea si, rope            ; Load address of rope character
+[ 231]    03AC: E8 16 04                              call shows_letter       ; Display the rope
+[ 232]        :                                       
+[ 233]    03AF: EB 00                                 jmp begin               ; Jump to word processing initialization
+[ 234]        :                                       
+[ 235]        :                                       ; ========================================================================
+[ 236]        :                                       ; PROCEDURE: INITIALIZE_WORD_DISPLAY
+[ 237]        :                                       ; Description: Processes the target word and creates display lines
+[ 238]        :                                       ; Input: str_word (target word string)
+[ 239]        :                                       ; Output: str_lines (display format with underscores)
+[ 240]        :                                       ; Modifies: BX, AL, str_lines array
+[ 241]        :                                       ; ========================================================================
+[ 242]    03B1:                                       begin:
+[ 243]    03B1: BB 00 00                              mov bx, 0               ; Initialize index counter
+[ 244]        :                                       
+[ 245]    03B4:                                       fills_str_lines:
+[ 246]    03B4: 80 BF 5C 01 24                        cmp str_word[bx],"$"    ; Check for end of string marker
+[ 247]    03B9: 74 1B                                 je  continues           ; If end found, continue to next phase
+[ 248]        :                                       
+[ 249]    03BB: 80 BF 5C 01 20                        cmp str_word[bx]," "    ; Check if current character is space
+[ 250]    03C0: 74 0A                                 je  str_spaceline       ; If space, handle differently
+[ 251]        :                                       
+[ 252]        :                                       ; For regular letters, show underscore
+[ 253]    03C2: A0 5A 01                              mov al,str_line         ; Load underscore character
+[ 254]    03C5: 88 87 2F 02                           mov str_lines[bx], al   ; Store underscore in display array
+[ 255]        :                                       
+[ 256]    03C9: 43                                    inc bx                  ; Move to next character
+[ 257]    03CA: EB E8                                 jmp fills_str_lines     ; Continue processing
+[ 258]        :                                       
+[ 259]    03CC:                                       str_spaceline:
+[ 260]        :                                       ; For spaces, show empty space in display
+[ 261]    03CC: A0 5B 01                              mov al,str_empty        ; Load empty space character
+[ 262]    03CF: 88 87 2F 02                           mov str_lines[bx], al   ; Store space in display array
+[ 263]    03D3: 43                                    inc bx                  ; Move to next character
+[ 264]    03D4: EB DE                                 jmp fills_str_lines     ; Continue processing
+[ 265]        :                                       
+[ 266]        :                                       ; ========================================================================
+[ 267]        :                                       ; PROCEDURE: CALCULATE_WORD_SIZE
+[ 268]        :                                       ; Description: Calculates the size of the word excluding spaces
+[ 269]        :                                       ; Input: str_word (target word)
+[ 270]        :                                       ; Output: size_none, size_none_minor (word length variables)
+[ 271]        :                                       ; Modifies: BX, DL, size_none, size_none_minor
+[ 272]        :                                       ; ========================================================================
+[ 273]    03D6:                                       continues:
+[ 274]        :                                       ; Calculate total word size
+[ 275]    03D6: BB 68 01                              mov bx,offset size_none ; Get address of size variable
+[ 276]    03D9: 81 EB 5C 01                           sub bx,offset str_word  ; Subtract word start address
+[ 277]    03DD: 83 EB 01                              sub bx, 1               ; Adjust for zero-based indexing
+[ 278]    03E0: 88 1E 68 01                           mov size_none,bl        ; Store total size
+[ 279]        :                                       
+[ 280]    03E4: BB 00 00                              mov bx, 0               ; Reset index
+[ 281]    03E7: 8A 16 68 01                           mov dl, size_none       ; Copy size to working variable
+[ 282]    03EB: 88 16 69 01                           mov size_none_minor, dl ; Store working size
+[ 283]        :                                       
+[ 284]    03EF:                                       counts_space_lines:
+[ 285]    03EF: 80 BF 5C 01 20                        cmp str_word[bx], 32    ; Check if character is space (ASCII 32)
+[ 286]    03F4: 74 0A                                 je discard_space_lines  ; If space, don't count it
+[ 287]    03F6: 80 BF 5C 01 24                        cmp str_word[bx], "$"   ; Check for end of string
+[ 288]    03FB: 74 0B                                 je continues_two        ; If end, continue to display
+[ 289]        :                                       
+[ 290]    03FD: 43                                    inc bx                  ; Move to next character
+[ 291]    03FE: EB EF                                 jmp counts_space_lines  ; Continue counting
+[ 292]        :                                       
+[ 293]    0400:                                       discard_space_lines:
+[ 294]    0400: 43                                    inc bx                  ; Move past the space
+[ 295]    0401: 80 2E 69 01 01                        sub size_none_minor, 1  ; Reduce count (don't count spaces)
+[ 296]    0406: EB E7                                 jmp counts_space_lines  ; Continue counting
+[ 297]        :                                       
+[ 298]        :                                       ; ========================================================================
+[ 299]        :                                       ; PROCEDURE: DISPLAY_WORD_LINES
+[ 300]        :                                       ; Description: Displays the word as underscores/spaces on screen
+[ 301]        :                                       ; Input: str_lines (processed word display), size_none
+[ 302]        :                                       ; Output: Word display rendered on screen
+[ 303]        :                                       ; Modifies: BX, CL, SI, DI, AL, column_a, line
+[ 304]        :                                       ; ========================================================================
+[ 305]    0408:                                       continues_two:
+[ 306]        :                                       ; Set display position for word
+[ 307]    0408: C7 06 51 00 0E 00                     mov line,14             ; Set line position for word display
+[ 308]    040E: C7 06 53 00 10 00                     mov column_a,16         ; Set starting column position
+[ 309]    0414: BB 00 00                              mov bx,0                ; Reset character index
+[ 310]    0417: B1 00                                 mov cl,0                ; Reset character counter
+[ 311]        :                                       
+[ 312]    0419:                                       shows_str_lines:
+[ 313]    0419: 8D B7 2F 02                           lea si,str_lines[bx]    ; Load address of current display character
+[ 314]        :                                       
+[ 315]    041D: 3A 0E 68 01                           cmp cl,size_none        ; Check if all characters processed
+[ 316]    0421: 74 26                                 je  show_msg_top        ; If done, show top message
+[ 317]        :                                       
+[ 318]    0423: 83 3E 53 00 26                        cmp column_a, 38        ; Check if line is full (38 characters)
+[ 319]    0428: 74 12                                 je  new_line            ; If full, move to new line
+[ 320]        :                                       
+[ 321]    042A: E8 68 03                              call calculate_line_and_column ; Calculate screen position
+[ 322]        :                                       
+[ 323]    042D: 8A 04                                 mov al,[si]             ; Load character to display
+[ 324]    042F: 26 88 05                              mov es:[di], al         ; Write character to video memory
+[ 325]        :                                       
+[ 326]    0432: 43                                    inc bx                  ; Move to next character
+[ 327]    0433: FE C1                                 inc cl                  ; Increment character counter
+[ 328]    0435: 83 06 53 00 02                        add column_a,2          ; Move 2 positions right (spacing)
+[ 329]        :                                       
+[ 330]    043A: EB DD                                 jmp shows_str_lines     ; Continue displaying characters
+[ 331]        :                                       
+[ 332]    043C:                                       new_line:
+[ 333]    043C: C7 06 53 00 10 00                     mov column_a,16         ; Reset to starting column
+[ 334]    0442: 83 06 51 00 02                        add line, 2             ; Move down 2 lines
+[ 335]    0447: EB D0                                 jmp shows_str_lines     ; Continue displaying
+[ 336]        :                                       
+[ 337]        :                                       ; ========================================================================
+[ 338]        :                                       ; PROCEDURE: DISPLAY_TOP_MESSAGE
+[ 339]        :                                       ; Description: Displays the game instructions at the top of screen
+[ 340]        :                                       ; Input: msg_top (message string)
+[ 341]        :                                       ; Output: Instructions displayed on screen
+[ 342]        :                                       ; Modifies: line, column_a, SI
+[ 343]        :                                       ; ========================================================================
+[ 344]    0449:                                       show_msg_top:
+[ 345]    0449: C7 06 51 00 01 00                     mov line, 1             ; Set line position for top message
+[ 346]    044F: C7 06 53 00 0D 00                     mov column_a, 13        ; Set column position for message
+[ 347]    0455: BE A1 01                              lea si, msg_top         ; Load address of top message
+[ 348]    0458: E8 A8 03                              call ascii_to_bitmap    ; Convert and display message
+[ 349]    045B: EB 00                                 jmp guess               ; Jump to input handling
+[ 350]        :                                       
+[ 351]        :                                       ; ========================================================================
+[ 352]        :                                       ; PROCEDURE: GET_USER_INPUT
+[ 353]        :                                       ; Description: Gets a character input from user and processes it
+[ 354]        :                                       ; Input: User keyboard input
+[ 355]        :                                       ; Output: Character stored for processing
+[ 356]        :                                       ; Modifies: AX, AL, BX, DI
+[ 357]        :                                       ; ========================================================================
+[ 358]    045D:                                       guess:
+[ 359]    045D: B4 08                                 mov ah, 08              ; DOS function: get character without echo
+[ 360]    045F: CD 21                                 int 21h                 ; Call DOS interrupt
+[ 361]        :                                       
+[ 362]    0461: E8 0E 00                              call nobreak           ; Call stack management routine
+[ 363]    0464: E8 BF 00                              call limpa_line        ; Clear input line
+[ 364]    0467: 57                                    push di                ; Save DI register
+[ 365]        :                                       
+[ 366]    0468: 3C 60                                 cmp al,96               ; Check if character is lowercase (> 96)
+[ 367]    046A: 77 02                                 ja uppercase            ; If lowercase, convert to uppercase
+[ 368]        :                                       
+[ 369]    046C: EB 19                                 jmp guess_validation    ; Jump to input validation
+[ 370]        :                                       
+[ 371]        :                                       ; ========================================================================
+[ 372]        :                                       ; PROCEDURE: CONVERT_TO_UPPERCASE
+[ 373]        :                                       ; Description: Converts lowercase letters to uppercase
+[ 374]        :                                       ; Input: AL (character to convert)
+[ 375]        :                                       ; Output: AL (converted uppercase character)
+[ 376]        :                                       ; Modifies: AL
+[ 377]        :                                       ; ========================================================================
+[ 378]    046E:                                       uppercase:
+[ 379]    046E: 2C 20                                 sub al,20h              ; Subtract 32 to convert to uppercase
+[ 380]    0470: EB 15                                 jmp guess_validation    ; Jump to validation
+[ 381]        :                                       
+[ 382]        :                                       ; ========================================================================
+[ 383]        :                                       ; PROCEDURE: STACK_MANAGEMENT
+[ 384]        :                                       ; Description: Manages stack operations for function calls
+[ 385]        :                                       ; Input: Stack state
+[ 386]        :                                       ; Output: Managed stack state
+[ 387]        :                                       ; Modifies: BX (temporarily)
+[ 388]        :                                       ; ========================================================================
+[ 389]    0472:                                       nobreak:
+[ 390]    0472: 5B                                    pop  bx                 ; Pop return address
+[ 391]    0473: 53                                    push bx                 ; Push it back
+[ 392]    0474: BB 00 00                              mov  bx,0               ; Clear BX
+[ 393]    0477: C3                                    ret                     ; Return to caller
+[ 394]        :                                       
+[ 395]        :                                       ; ========================================================================
+[ 396]        :                                       ; PROCEDURE: STORE_VALID_GUESS
+[ 397]        :                                       ; Description: Stores a validated guess in the guess string
+[ 398]        :                                       ; Input: AL (character), DI (index)
+[ 399]        :                                       ; Output: Character stored in str_guess array
+[ 400]        :                                       ; Modifies: str_guess array
+[ 401]        :                                       ; ========================================================================
+[ 402]    0478:                                       list_alphabet_validation:
+[ 403]    0478: 88 85 6C 01                           mov str_guess[di],al    ; Store guessed character
+[ 404]    047C: C6 85 6D 01 24                        mov str_guess[di+1],"$" ; Add string terminator
+[ 405]    0481: C3                                    ret                     ; Return to caller
+[ 406]        :                                       
+[ 407]        :                                       ; ========================================================================
+[ 408]        :                                       ; PROCEDURE: PROCESS_VALIDATED_INPUT
+[ 409]        :                                       ; Description: Processes input that has passed initial validation
+[ 410]        :                                       ; Input: Validated character in AL
+[ 411]        :                                       ; Output: Continues to character validation
+[ 412]        :                                       ; Modifies: None (calls other procedures)
+[ 413]        :                                       ; ========================================================================
+[ 414]    0482:                                       validated:
+[ 415]    0482: E8 ED FF                              call nobreak           ; Manage stack
+[ 416]    0485: EB 26                                 jmp  ascii             ; Jump to ASCII validation
+[ 417]        :                                       
+[ 418]        :                                       ; ========================================================================
+[ 419]        :                                       ; PROCEDURE: CHECK_ALREADY_GUESSED
+[ 420]        :                                       ; Description: Checks if the character has already been guessed
+[ 421]        :                                       ; Input: AL (character), str_guess (previous guesses)
+[ 422]        :                                       ; Output: Either continues or shows "already guessed" message
+[ 423]        :                                       ; Modifies: BX, DI
+[ 424]        :                                       ; ========================================================================
+[ 425]    0487:                                       guess_validation:
+[ 426]    0487: 8B FB                                 mov  di,bx              ; Save BX in DI
+[ 427]    0489: 38 87 6C 01                           cmp  str_guess[bx],al   ; Check if character already guessed
+[ 428]    048D: 74 0A                                 je shows_text_two       ; If already guessed, show message
+[ 429]    048F: 80 BF 6C 01 24                        cmp  str_guess[bx],"$"  ; Check for end of guess string
+[ 430]    0494: 74 EC                                 je   validated          ; If end reached, character is new
+[ 431]        :                                       
+[ 432]    0496: 43                                    inc  bx                 ; Move to next guess
+[ 433]    0497: EB EE                                 jmp  guess_validation   ; Continue checking
+[ 434]        :                                       
+[ 435]        :                                       ; ========================================================================
+[ 436]        :                                       ; PROCEDURE: DISPLAY_ALREADY_GUESSED_MESSAGE
+[ 437]        :                                       ; Description: Shows message when user enters a previously guessed letter
+[ 438]        :                                       ; Input: already_guessed (message string)
+[ 439]        :                                       ; Output: Message displayed on screen
+[ 440]        :                                       ; Modifies: line, column_a, SI
+[ 441]        :                                       ; ========================================================================
+[ 442]    0499:                                       shows_text_two:
+[ 443]    0499: C7 06 51 00 05 00                     mov line, 5             ; Set message line position
+[ 444]    049F: C7 06 53 00 0D 00                     mov column_a, 13        ; Set message column position
+[ 445]    04A5: BE D3 01                              lea si, already_guessed ; Load "already guessed" message
+[ 446]    04A8: E8 58 03                              call ascii_to_bitmap    ; Display the message
+[ 447]    04AB: EB B0                                 jmp guess               ; Return to input loop
+[ 448]        :                                       
+[ 449]        :                                       ; ========================================================================
+[ 450]        :                                       ; PROCEDURE: VALIDATE_ALPHABETIC_CHARACTER
+[ 451]        :                                       ; Description: Checks if input character is a valid letter (A-Z)
+[ 452]        :                                       ; Input: AL (character), alphabet_validation (valid character string)
+[ 453]        :                                       ; Output: Either continues or shows invalid character message
+[ 454]        :                                       ; Modifies: BX
+[ 455]        :                                       ; ========================================================================
+[ 456]    04AD:                                       ascii:
+[ 457]    04AD: 38 87 86 01                           cmp  alphabet_validation[bx],al ; Check against valid alphabet
+[ 458]    04B1: 74 1E                                 je   eascii             ; If valid, continue processing
+[ 459]    04B3: 80 BF 86 01 24                        cmp  alphabet_validation[bx],"$" ; Check for end of alphabet string
+[ 460]    04B8: 74 03                                 je shows_text_three     ; If end reached, character is invalid
+[ 461]        :                                       
+[ 462]    04BA: 43                                    inc  bx                 ; Move to next valid character
+[ 463]    04BB: EB F0                                 jmp  ascii              ; Continue validation
+[ 464]        :                                       
+[ 465]        :                                       ; ========================================================================
+[ 466]        :                                       ; PROCEDURE: DISPLAY_INVALID_CHARACTER_MESSAGE
+[ 467]        :                                       ; Description: Shows message when user enters invalid character
+[ 468]        :                                       ; Input: invalid_char (message string)
+[ 469]        :                                       ; Output: Message displayed on screen
+[ 470]        :                                       ; Modifies: line, column_a, SI
+[ 471]        :                                       ; ========================================================================
+[ 472]    04BD:                                       shows_text_three:
+[ 473]    04BD: C7 06 51 00 05 00                     mov line, 5             ; Set message line position
+[ 474]    04C3: C7 06 53 00 0C 00                     mov column_a, 12        ; Set message column position
+[ 475]    04C9: BE E3 01                              lea si, invalid_char    ; Load "invalid character" message
+[ 476]    04CC: E8 34 03                              call ascii_to_bitmap    ; Display the message
+[ 477]    04CF: EB 8C                                 jmp guess               ; Return to input loop
+[ 478]        :                                       
+[ 479]        :                                       ; ========================================================================
+[ 480]        :                                       ; PROCEDURE: STORE_ALPHABET_INDEX
+[ 481]        :                                       ; Description: Stores the index of the valid character in alphabet
+[ 482]        :                                       ; Input: BX (alphabet index)
+[ 483]        :                                       ; Output: alplhabet_index updated
+[ 484]        :                                       ; Modifies: alplhabet_index variable
+[ 485]        :                                       ; ========================================================================
+[ 486]    04D1:                                       eascii:
+[ 487]    04D1: 89 1E 2B 02                           mov  alplhabet_index,bx ; Store alphabet index
+[ 488]    04D5: E8 9A FF                              call nobreak           ; Manage stack
+[ 489]    04D8: EB 00                                 jmp  comparing          ; Jump to word comparison
+[ 490]        :                                       
+[ 491]        :                                       ; ========================================================================
+[ 492]        :                                       ; PROCEDURE: COMPARE_WITH_TARGET_WORD
+[ 493]        :                                       ; Description: Checks if guessed letter exists in target word
+[ 494]        :                                       ; Input: AL (guessed character), str_word (target word)
+[ 495]        :                                       ; Output: Branches to correct/incorrect handling
+[ 496]        :                                       ; Modifies: BX, index_str_word
+[ 497]        :                                       ; ========================================================================
+[ 498]    04DA:                                       comparing:
+[ 499]    04DA: 38 87 5C 01                           cmp  str_word[bx], al   ; Compare guess with word character
+[ 500]    04DE: 74 0E                                 je   got_it             ; If match found, handle correct guess
+[ 501]    04E0: 80 BF 5C 01 24                        cmp  str_word[bx], "$"  ; Check for end of word
+[ 502]    04E5: 74 26                                 je   u_wrong            ; If end reached, guess is wrong
+[ 503]        :                                       
+[ 504]    04E7: 43                                    inc  bx                 ; Move to next character in word
+[ 505]    04E8: EB F0                                 jmp  comparing          ; Continue comparing
+[ 506]    04EA: 89 1E 2D 02                           mov  index_str_word, bx ; Store current word index
+[ 507]        :                                       
+[ 508]        :                                       ; ========================================================================
+[ 509]        :                                       ; PROCEDURE: HANDLE_CORRECT_GUESS
+[ 510]        :                                       ; Description: Processes a correct letter guess
+[ 511]        :                                       ; Input: AL (correct character), BX (position in word)
+[ 512]        :                                       ; Output: Letter revealed in display, checks for win condition
+[ 513]        :                                       ; Modifies: Various registers and game state variables
+[ 514]        :                                       ; ========================================================================
+[ 515]    04EE:                                       got_it:
+[ 516]    04EE: E8 87 FF                              call list_alphabet_validation ; Store the guess
+[ 517]    04F1: 89 1E 2D 02                           mov  index_str_word, bx ; Store word position
+[ 518]    04F5: 5F                                    pop  di                 ; Restore DI
+[ 519]    04F6: 5B                                    pop  bx                 ; Restore BX
+[ 520]        :                                       
+[ 521]    04F7: E8 4F 00                              call letter_bitmap      ; Display the revealed letter
+[ 522]        :                                       
+[ 523]    04FA: E8 75 FF                              call nobreak           ; Manage stack
+[ 524]        :                                       
+[ 525]        :                                       ; Check for win condition
+[ 526]    04FD: 8A 1E 69 01                           mov  bl, size_none_minor ; Load required correct guesses
+[ 527]    0501: 38 1E 6B 01                           cmp  success_guess_counter, bl ; Compare with current successes
+[ 528]    0505: 75 03 E9 37 01                        je gameover             ; If all letters guessed, game over
+[ 529]        :                                       
+[ 530]    050A: E9 50 FF                              jmp  guess              ; Continue game loop
+[ 531]        :                                       
+[ 532]        :                                       ; ========================================================================
+[ 533]        :                                       ; PROCEDURE: HANDLE_INCORRECT_GUESS
+[ 534]        :                                       ; Description: Processes an incorrect letter guess
+[ 535]        :                                       ; Input: AL (incorrect character)
+[ 536]        :                                       ; Output: Mistake counter incremented, hangman part drawn
+[ 537]        :                                       ; Modifies: mistakes counter, game state
+[ 538]        :                                       ; ========================================================================
+[ 539]    050D:                                       u_wrong:
+[ 540]    050D: E8 68 FF                              call list_alphabet_validation ; Store the guess
+[ 541]        :                                       
+[ 542]    0510: 5B                                    pop  bx                 ; Restore BX
+[ 543]    0511: 5F                                    pop  di                 ; Restore DI
+[ 544]        :                                       
+[ 545]    0512: FE 06 6A 01                           inc  mistakes           ; Increment mistake counter
+[ 546]    0516: E8 89 01                              call verify_mistakes    ; Draw corresponding hangman part
+[ 547]    0519: 80 3E 6A 01 06                        cmp  mistakes,6         ; Check if maximum mistakes reached
+[ 548]    051E: 75 03 E9 1E 01                        je gameover             ; If 6 mistakes, game over
+[ 549]        :                                       
+[ 550]    0523: E9 37 FF                              jmp  guess              ; Continue game loop
+[ 551]        :                                       
+[ 552]        :                                       ; ========================================================================
+[ 553]        :                                       ; PROCEDURE: CLEAR_MESSAGE_LINE
+[ 554]        :                                       ; Description: Clears the message line by overwriting with spaces
+[ 555]        :                                       ; Input: None
+[ 556]        :                                       ; Output: Message line cleared on screen
+[ 557]        :                                       ; Modifies: line, column_a, SI
+[ 558]        :                                       ; ========================================================================
+[ 559]    0526:                                       limpa_line:
+[ 560]    0526: C7 06 51 00 05 00                     mov line, 5             ; Set line to clear
+[ 561]    052C: C7 06 53 00 08 00                     mov column_a, 8         ; Set starting column
+[ 562]        :                                       
+[ 563]    0532:                                       repeat_limpa_line:
+[ 564]    0532: BE 51 01                              lea si, space_line      ; Load space character
+[ 565]        :                                       
+[ 566]    0535: 83 3E 53 00 23                        cmp column_a, 35        ; Check if end of line reached
+[ 567]    053A: 75 03 E9 99 02                        je returns              ; If yes, return
+[ 568]        :                                       
+[ 569]    053F: E8 83 02                              call shows_letter       ; Display space character
+[ 570]    0542: 83 06 53 00 01                        add column_a, 1         ; Move to next column
+[ 571]        :                                       
+[ 572]    0547: EB E9                                 jmp repeat_limpa_line   ; Continue clearing
+[ 573]        :                                       
+[ 574]        :                                       ; ========================================================================
+[ 575]        :                                       ; PROCEDURE: DISPLAY_REVEALED_LETTER
+[ 576]        :                                       ; Description: Shows correctly guessed letters in the word display
+[ 577]        :                                       ; Input: AL (character), various position variables
+[ 578]        :                                       ; Output: Letter displayed in correct word position(s)
+[ 579]        :                                       ; Modifies: Multiple registers and position variables
+[ 580]        :                                       ; ========================================================================
+[ 581]    0549:                                       letter_bitmap:
+[ 582]    0549: FE 06 6B 01                           inc success_guess_counter ; Increment successful guess counter
+[ 583]        :                                       
+[ 584]    054D: 8B C8                                 mov cx, ax              ; Save character in CX
+[ 585]        :                                       
+[ 586]        :                                       ; Calculate alphabet bitmap index
+[ 587]    054F: BA 02 00                              mov  dx, 2              ; Each alphabet entry is 2 bytes
+[ 588]    0552: A1 2B 02                              mov  ax, alplhabet_index ; Get alphabet index
+[ 589]    0555: F7 E2                                 mul  dx                 ; Multiply by 2
+[ 590]    0557: 8B F8                                 mov  di, ax             ; Store result in DI
+[ 591]        :                                       
+[ 592]        :                                       ; Set up display parameters
+[ 593]    0559: 8B B5 F5 01                           mov  si, alphabet[di]   ; Get character bitmap address
+[ 594]    055D: C7 06 51 00 0D 00                     mov  line, 13           ; Set display line
+[ 595]    0563: C7 06 53 00 10 00                     mov column_a,16         ; Set starting column
+[ 596]        :                                       
+[ 597]        :                                       ; Calculate display position
+[ 598]    0569: 8B 16 2D 02                           mov  dx, index_str_word ; Get word position
+[ 599]    056D: 01 16 53 00                           add  column_a, dx       ; Add to column position
+[ 600]    0571: 01 16 53 00                           add  column_a, dx       ; Double spacing
+[ 601]        :                                       
+[ 602]        :                                       ; Handle line wrapping for long words
+[ 603]    0575: 83 FA 36                              cmp dx, 54              ; Check if position > 54
+[ 604]    0578: 7E 03 E9 A9 00                        jg  line_six            ; If yes, use line 6
+[ 605]    057D: 83 FA 2B                              cmp dx, 43              ; Check if position > 43
+[ 606]    0580: 7E 03 E9 86 00                        jg  line_five           ; If yes, use line 5
+[ 607]    0585: 83 FA 20                              cmp dx, 32              ; Check if position > 32
+[ 608]    0588: 7F 67                                 jg  line_four           ; If yes, use line 4
+[ 609]    058A: 83 FA 15                              cmp dx, 21              ; Check if position > 21
+[ 610]    058D: 7F 48                                 jg  line_three          ; If yes, use line 3
+[ 611]    058F: 83 FA 0A                              cmp dx, 10              ; Check if position > 10
+[ 612]    0592: 7F 29                                 jg  line_two            ; If yes, use line 2
+[ 613]        :                                       
+[ 614]    0594:                                       a:
+[ 615]    0594: E8 2E 02                              call shows_letter       ; Display the character
+[ 616]        :                                       
+[ 617]    0597: 8B C1                                 mov ax, cx              ; Restore character
+[ 618]        :                                       
+[ 619]        :                                       ; Find next occurrence of same letter
+[ 620]    0599: 8B 1E 2D 02                           mov bx, index_str_word  ; Get current position
+[ 621]    059D: 83 C3 01                              add bx, 1               ; Move to next position
+[ 622]    05A0: 83 06 2D 02 01                        add index_str_word, 1   ; Update index
+[ 623]        :                                       
+[ 624]    05A5:                                       repeat_letter:
+[ 625]    05A5: 38 87 5C 01                           cmp str_word[bx], al    ; Check if same letter found
+[ 626]    05A9: 74 9E                                 je  letter_bitmap       ; If found, display it too
+[ 627]    05AB: 80 BF 5C 01 24                        cmp str_word[bx], "$"   ; Check for end of word
+[ 628]    05B0: 75 03 E9 23 02                        je returns              ; If end, return
+[ 629]    05B5: 43                                    inc bx                  ; Move to next character
+[ 630]    05B6: 83 06 2D 02 01                        add index_str_word, 1   ; Update index
+[ 631]    05BB: EB E8                                 jmp repeat_letter       ; Continue searching
+[ 632]        :                                       
+[ 633]        :                                       ; Line positioning routines for word wrapping
+[ 634]    05BD:                                       line_two:
+[ 635]    05BD: 83 06 51 00 02                        add line, 2             ; Move down 2 lines
+[ 636]    05C2: C7 06 53 00 10 00                     mov column_a, 16        ; Reset column
+[ 637]    05C8: 01 16 53 00                           add column_a, dx        ; Add position
+[ 638]    05CC: 01 16 53 00                           add column_a, dx        ; Double spacing
+[ 639]    05D0: 83 2E 53 00 16                        sub column_a, 22        ; Adjust for line offset
+[ 640]    05D5: EB BD                                 jmp a                   ; Display character
+[ 641]        :                                       
+[ 642]    05D7:                                       line_three:
+[ 643]    05D7: 83 06 51 00 04                        add line, 4             ; Move down 4 lines
+[ 644]    05DC: C7 06 53 00 10 00                     mov column_a, 16        ; Reset column
+[ 645]    05E2: 01 16 53 00                           add column_a, dx        ; Add position
+[ 646]    05E6: 01 16 53 00                           add column_a, dx        ; Double spacing
+[ 647]    05EA: 83 2E 53 00 2C                        sub column_a, 44        ; Adjust for line offset
+[ 648]    05EF: EB A3                                 jmp a                   ; Display character
+[ 649]        :                                       
+[ 650]    05F1:                                       line_four:
+[ 651]    05F1: 83 06 51 00 06                        add line, 6             ; Move down 6 lines
+[ 652]    05F6: C7 06 53 00 10 00                     mov column_a, 16        ; Reset column
+[ 653]    05FC: 01 16 53 00                           add column_a, dx        ; Add position
+[ 654]    0600: 01 16 53 00                           add column_a, dx        ; Double spacing
+[ 655]    0604: 83 2E 53 00 42                        sub column_a, 66        ; Adjust for line offset
+[ 656]    0609: EB 89                                 jmp a                   ; Display character
+[ 657]        :                                       
+[ 658]    060B:                                       line_five:
+[ 659]    060B: 83 06 51 00 08                        add line, 8             ; Move down 8 lines
+[ 660]    0610: C7 06 53 00 10 00                     mov column_a, 16        ; Reset column
+[ 661]    0616: 01 16 53 00                           add column_a, dx        ; Add position
+[ 662]    061A: 01 16 53 00                           add column_a, dx        ; Double spacing
+[ 663]    061E: 83 2E 53 00 58                        sub column_a, 88        ; Adjust for line offset
+[ 664]    0623: E9 6E FF                              jmp a                   ; Display character
+[ 665]        :                                       
+[ 666]    0626:                                       line_six:
+[ 667]    0626: 83 06 51 00 0A                        add line, 10            ; Move down 10 lines
+[ 668]    062B: C7 06 53 00 10 00                     mov column_a, 16        ; Reset column
+[ 669]    0631: 01 16 53 00                           add column_a, dx        ; Add position
+[ 670]    0635: 01 16 53 00                           add column_a, dx        ; Double spacing
+[ 671]    0639: 83 2E 53 00 6E                        sub column_a, 110       ; Adjust for line offset
+[ 672]    063E: E9 53 FF                              jmp a                   ; Display character
+[ 673]        :                                       
+[ 674]        :                                       ; ========================================================================
+[ 675]        :                                       ; PROCEDURE: GAME_OVER_HANDLER
+[ 676]        :                                       ; Description: Handles end game conditions (win or lose)
+[ 677]        :                                       ; Input: mistakes counter
+[ 678]        :                                       ; Output: Appropriate end game message displayed
+[ 679]        :                                       ; Modifies: Screen display
+[ 680]        :                                       ; ========================================================================
+[ 681]    0641:                                       gameover:
+[ 682]    0641: 80 3E 6A 01 06                        cmp mistakes,6          ; Check if player lost (6 mistakes)
+[ 683]    0646: 74 1E                                 je  shows_msg_failure   ; If lost, show failure message
+[ 684]        :                                       
+[ 685]    0648: EB 05                                 jmp shows_msg_success   ; Otherwise, show success message
+[ 686]        :                                       
+[ 687]        :                                       ; ========================================================================
+[ 688]        :                                       ; PROCEDURE: PROGRAM_TERMINATION
+[ 689]        :                                       ; Description: Terminates the program and returns to DOS
+[ 690]        :                                       ; Input: None
+[ 691]        :                                       ; Output: Program ends
+[ 692]        :                                       ; Modifies: AX
+[ 693]        :                                       ; ========================================================================
+[ 694]    064A:                                       the_end:
+[ 695]    064A: B8 00 4C                              mov ax, 4c00h           ; DOS terminate program function
+[ 696]    064D: CD 21                                 int 21h                 ; Call DOS interrupt
+[ 697]        :                                       
+[ 698]        :                                       ; ========================================================================
+[ 699]        :                                       ; PROCEDURE: DISPLAY_SUCCESS_MESSAGE
+[ 700]        :                                       ; Description: Shows winning message when player guesses the word
+[ 701]        :                                       ; Input: msg_won (success message)
+[ 702]        :                                       ; Output: Success message displayed
+[ 703]        :                                       ; Modifies: Screen display, position variables
+[ 704]        :                                       ; ========================================================================
+[ 705]    064F:                                       shows_msg_success:
+[ 706]    064F: E8 40 00                              call clean_screen       ; Clear the screen
+[ 707]    0652: C7 06 51 00 0A 00                     mov line, 10            ; Set message line
+[ 708]    0658: C7 06 53 00 11 00                     mov column_a, 17        ; Set message column
+[ 709]    065E: BE C1 01                              lea si, msg_won         ; Load success message
+[ 710]    0661: E8 9F 01                              call ascii_to_bitmap    ; Display message
+[ 711]    0664: EB 17                                 jmp shows_msg_restart   ; Show restart option
+[ 712]        :                                       
+[ 713]        :                                       ; ========================================================================
+[ 714]        :                                       ; PROCEDURE: DISPLAY_FAILURE_MESSAGE
+[ 715]        :                                       ; Description: Shows losing message when player makes 6 mistakes
+[ 716]        :                                       ; Input: msg_lost (failure message)
+[ 717]        :                                       ; Output: Failure message displayed
+[ 718]        :                                       ; Modifies: Screen display, position variables
+[ 719]        :                                       ; ========================================================================
+[ 720]    0666:                                       shows_msg_failure:
+[ 721]    0666: E8 29 00                              call clean_screen       ; Clear the screen
+[ 722]    0669: C7 06 51 00 0A 00                     mov line, 10            ; Set message line
+[ 723]    066F: C7 06 53 00 10 00                     mov column_a, 16        ; Set message column
+[ 724]    0675: BE C9 01                              lea si, msg_lost        ; Load failure message
+[ 725]    0678: E8 88 01                              call ascii_to_bitmap    ; Display message
+[ 726]    067B: EB 00                                 jmp shows_msg_restart   ; Show restart option
+[ 727]        :                                       
+[ 728]        :                                       ; ========================================================================
+[ 729]        :                                       ; PROCEDURE: DISPLAY_RESTART_MESSAGE
+[ 730]        :                                       ; Description: Shows restart instructions to player
+[ 731]        :                                       ; Input: msg_restart (restart message)
+[ 732]        :                                       ; Output: Restart message displayed
+[ 733]        :                                       ; Modifies: Screen display, position variables
+[ 734]        :                                       ; ========================================================================
+[ 735]    067D:                                       shows_msg_restart:
+[ 736]    067D: C7 06 51 00 0C 00                     mov line, 12            ; Set message line
+[ 737]    0683: C7 06 53 00 0E 00                     mov column_a, 14        ; Set message column
+[ 738]    0689: BE B3 01                              lea si, msg_restart     ; Load restart message
+[ 739]    068C: E8 74 01                              call ascii_to_bitmap    ; Display message
+[ 740]    068F: E9 60 01                              jmp restart             ; Jump to restart handler
+[ 741]        :                                       
+[ 742]        :                                       ; ========================================================================
+[ 743]        :                                       ; PROCEDURE: CLEAR_SCREEN
+[ 744]        :                                       ; Description: Clears the entire screen by filling video memory with zeros
+[ 745]        :                                       ; Input: None
+[ 746]        :                                       ; Output: Screen cleared to black
+[ 747]        :                                       ; Modifies: AX, ES, DI, CX
+[ 748]        :                                       ; ========================================================================
+[ 749]    0692:                                       clean_screen:
+[ 750]    0692: B8 00 A0                              mov ax,0a000h           ; Video memory segment
+[ 751]    0695: 8E C0                                 mov es,ax               ; Point ES to video memory
+[ 752]    0697: 33 FF                                 xor di,di               ; Start at beginning of video memory
+[ 753]    0699: 33 C0                                 xor ax,ax               ; Clear AX (value to fill with)
+[ 754]    069B: B9 00 7D                              mov cx,32000d           ; Number of words to clear (64000 bytes / 2)
+[ 755]    069E: FC                                    cld                     ; Clear direction flag (forward)
+[ 756]    069F: F3 AB                                 rep stosw               ; Repeat store word (clear screen)
+[ 757]    06A1: C3                                    ret                     ; Return to caller
+[ 758]        :                                       
+[ 759]        :                                       ; ========================================================================
+[ 760]        :                                       ; PROCEDURE: DRAW_HANGMAN_PARTS
+[ 761]        :                                       ; Description: Draws appropriate hangman part based on mistake count
+[ 762]        :                                       ; Input: mistakes (current mistake count)
+[ 763]        :                                       ; Output: Corresponding body part drawn
+[ 764]        :                                       ; Modifies: Position variables, screen display
+[ 765]        :                                       ; ========================================================================
+[ 766]    06A2:                                       verify_mistakes:
+[ 767]    06A2: 80 3E 6A 01 01                        cmp mistakes, 1         ; Check for first mistake
+[ 768]    06A7: 74 26                                 je shows_head           ; Draw head
+[ 769]        :                                       
+[ 770]    06A9: 80 3E 6A 01 02                        cmp mistakes, 2         ; Check for second mistake
+[ 771]    06AE: 74 32                                 je shows_body           ; Draw body
+[ 772]        :                                       
+[ 773]    06B0: 80 3E 6A 01 03                        cmp mistakes, 3         ; Check for third mistake
+[ 774]    06B5: 74 4A                                 je shows_arm            ; Draw arms
+[ 775]        :                                       
+[ 776]    06B7: 80 3E 6A 01 04                        cmp mistakes, 4         ; Check for fourth mistake
+[ 777]    06BC: 74 62                                 je shows_body_complete  ; Complete body
+[ 778]        :                                       
+[ 779]    06BE: 80 3E 6A 01 05                        cmp mistakes, 5         ; Check for fifth mistake
+[ 780]    06C3: 74 7A                                 je shows_leg            ; Draw first leg
+[ 781]        :                                       
+[ 782]    06C5: 80 3E 6A 01 06                        cmp mistakes, 6         ; Check for sixth mistake
+[ 783]    06CA: 75 03 E9 9B 00                        je shows_guy_complete   ; Complete hangman figure
+[ 784]        :                                       
+[ 785]        :                                       ; Individual hangman part drawing procedures
+[ 786]    06CF:                                       shows_head:
+[ 787]    06CF: C7 06 53 00 05 00                     mov column_a, 5         ; Set head position column
+[ 788]    06D5: C7 06 51 00 0B 00                     mov line, 11            ; Set head position line
+[ 789]    06DB: BE 1B 00                              lea si, head            ; Load head character
+[ 790]    06DE: E8 E4 00                              call shows_letter       ; Display head
+[ 791]    06E1: C3                                    ret                     ; Return
+[ 792]        :                                       
+[ 793]    06E2:                                       shows_body:
+[ 794]    06E2: C7 06 53 00 05 00                     mov column_a, 5         ; Set position column
+[ 795]    06E8: C7 06 51 00 0B 00                     mov line, 11            ; Set head line
+[ 796]    06EE: BE 1B 00                              lea si, head            ; Display head
+[ 797]    06F1: E8 D1 00                              call shows_letter
+[ 798]        :                                       
+[ 799]    06F4: C7 06 51 00 0C 00                     mov line, 12            ; Set body line
+[ 800]    06FA: BE 24 00                              lea si, body_1          ; Load body part 1
+[ 801]    06FD: E8 C5 00                              call shows_letter       ; Display body part
+[ 802]    0700: C3                                    ret                     ; Return
+[ 803]        :                                       
+[ 804]    0701:                                       shows_arm:
+[ 805]    0701: C7 06 53 00 05 00                     mov column_a, 5         ; Set position column
+[ 806]    0707: C7 06 51 00 0B 00                     mov line, 11            ; Set head line
+[ 807]    070D: BE 1B 00                              lea si, head            ; Display head
+[ 808]    0710: E8 B2 00                              call shows_letter
+[ 809]        :                                       
+[ 810]    0713: C7 06 51 00 0C 00                     mov line, 12            ; Set body line
+[ 811]    0719: BE 2D 00                              lea si, body_2          ; Load body part 2 (with arms)
+[ 812]    071C: E8 A6 00                              call shows_letter       ; Display body with arms
+[ 813]    071F: C3                                    ret                     ; Return
+[ 814]        :                                       
+[ 815]    0720:                                       shows_body_complete:
+[ 816]    0720: C7 06 53 00 05 00                     mov column_a, 5         ; Set position column
+[ 817]    0726: C7 06 51 00 0B 00                     mov line, 11            ; Set head line
+[ 818]    072C: BE 1B 00                              lea si, head            ; Display head
+[ 819]    072F: E8 93 00                              call shows_letter
+[ 820]        :                                       
+[ 821]    0732: C7 06 51 00 0C 00                     mov line, 12            ; Set body line
+[ 822]    0738: BE 36 00                              lea si, body_3          ; Load complete body
+[ 823]    073B: E8 87 00                              call shows_letter       ; Display complete body
+[ 824]    073E: C3                                    ret                     ; Return
+[ 825]        :                                       
+[ 826]    073F:                                       shows_leg:
+[ 827]    073F: C7 06 53 00 05 00                     mov column_a, 5         ; Set position column
+[ 828]    0745: C7 06 51 00 0B 00                     mov line, 11            ; Set head line
+[ 829]    074B: BE 1B 00                              lea si, head            ; Display head
+[ 830]    074E: E8 74 00                              call shows_letter
+[ 831]        :                                       
+[ 832]    0751: C7 06 51 00 0C 00                     mov line, 12            ; Set body line
+[ 833]    0757: BE 36 00                              lea si, body_3          ; Display complete body
+[ 834]    075A: E8 68 00                              call shows_letter
+[ 835]        :                                       
+[ 836]    075D: C7 06 51 00 0D 00                     mov line, 13            ; Set leg line
+[ 837]    0763: BE 3F 00                              lea si, leg_1           ; Load first leg
+[ 838]    0766: E8 5C 00                              call shows_letter       ; Display first leg
+[ 839]    0769: C3                                    ret                     ; Return
+[ 840]        :                                       
+[ 841]    076A:                                       shows_guy_complete:
+[ 842]    076A: C7 06 53 00 05 00                     mov column_a, 5         ; Set position column
+[ 843]    0770: C7 06 51 00 0B 00                     mov line, 11            ; Set head line
+[ 844]    0776: BE 1B 00                              lea si, head            ; Display head
+[ 845]    0779: E8 49 00                              call shows_letter
+[ 846]        :                                       
+[ 847]    077C: C7 06 51 00 0C 00                     mov line, 12            ; Set body line
+[ 848]    0782: BE 36 00                              lea si, body_3          ; Display complete body
+[ 849]    0785: E8 3D 00                              call shows_letter
+[ 850]        :                                       
+[ 851]    0788: C7 06 51 00 0D 00                     mov line, 13            ; Set legs line
+[ 852]    078E: BE 48 00                              lea si, leg_2           ; Load both legs
+[ 853]    0791: E8 31 00                              call shows_letter       ; Display both legs
+[ 854]    0794: C3                                    ret                     ; Return
+[ 855]        :                                       
+[ 856]        :                                       ; ========================================================================
+[ 857]        :                                       ; PROCEDURE: CALCULATE_SCREEN_POSITION
+[ 858]        :                                       ; Description: Converts line/column coordinates to video memory address
+[ 859]        :                                       ; Input: line, column_a (screen coordinates)
+[ 860]        :                                       ; Output: DI (video memory offset)
+[ 861]        :                                       ; Modifies: AX, BX, DI (preserves original values on stack)
+[ 862]        :                                       ; ========================================================================
+[ 863]    0795:                                       calculate_line_and_column:
+[ 864]    0795: FF 36 51 00                           push line               ; Save line value
+[ 865]    0799: FF 36 53 00                           push column_a           ; Save column value
+[ 866]    079D: 50                                    push ax                 ; Save AX register
+[ 867]    079E: 53                                    push bx                 ; Save BX register
+[ 868]        :                                       
+[ 869]    079F: BF 00 00                              mov di, 0               ; Initialize DI
+[ 870]        :                                       
+[ 871]        :                                       ; Calculate line offset: line * 40 * 8
+[ 872]    07A2: A1 51 00                              mov ax, line            ; Load line number
+[ 873]    07A5: BB 28 00                              mov bx, 40              ; 40 characters per line
+[ 874]    07A8: F7 E3                                 mul bx                  ; AX = line * 40
+[ 875]        :                                       
+[ 876]    07AA: BB 08 00                              mov bx, 08              ; 8 pixels per character height
+[ 877]    07AD: F7 E3                                 mul bx                  ; AX = line * 40 * 8
+[ 878]        :                                       
+[ 879]    07AF: A3 51 00                              mov line, ax            ; Store calculated line offset
+[ 880]        :                                       
+[ 881]    07B2: 03 3E 53 00                           add di, column_a        ; Add column offset
+[ 882]    07B6: 03 3E 51 00                           add di, line            ; Add line offset
+[ 883]        :                                       
+[ 884]    07BA: 5B                                    pop bx                  ; Restore BX
+[ 885]    07BB: 58                                    pop ax                  ; Restore AX
+[ 886]    07BC: 8F 06 53 00                           pop column_a            ; Restore column_a
+[ 887]    07C0: 8F 06 51 00                           pop line                ; Restore line
+[ 888]        :                                       
+[ 889]    07C4: C3                                    ret                     ; Return with DI = video memory offset
+[ 890]        :                                       
+[ 891]        :                                       ; ========================================================================
+[ 892]        :                                       ; PROCEDURE: DISPLAY_CHARACTER_BITMAP
+[ 893]        :                                       ; Description: Displays a character bitmap at current screen position
+[ 894]        :                                       ; Input: SI (pointer to character data), DI (screen position)
+[ 895]        :                                       ; Output: Character displayed on screen
+[ 896]        :                                       ; Modifies: DL, DI, SI
+[ 897]        :                                       ; ========================================================================
+[ 898]    07C5:                                       shows_letter:
+[ 899]    07C5: E8 CD FF                              call calculate_line_and_column ; Calculate screen position
+[ 900]        :                                       
+[ 901]    07C8:                                       writes:
+[ 902]    07C8: 8A 14                                 mov dl, [si]            ; Load byte from character data
+[ 903]    07CA: 80 FA 24                              cmp dl, "$"             ; Check for end marker
+[ 904]    07CD: 74 09                                 je returns              ; If end, return
+[ 905]        :                                       
+[ 906]    07CF: 26 88 15                              mov es:[di], dl         ; Write byte to video memory
+[ 907]        :                                       
+[ 908]    07D2: 83 C7 28                              add di, 40              ; Move to next line (40 bytes per line)
+[ 909]    07D5: 46                                    inc si                  ; Move to next byte in character data
+[ 910]    07D6: EB F0                                 jmp writes              ; Continue writing
+[ 911]        :                                       
+[ 912]    07D8:                                       returns:
+[ 913]    07D8: C3                                    ret                     ; Return to caller
+[ 914]        :                                       
+[ 915]        :                                       ; ========================================================================
+[ 916]        :                                       ; PROCEDURE: DISPLAY_SINGLE_CHARACTER
+[ 917]        :                                       ; Description: Displays a single character at calculated position
+[ 918]        :                                       ; Input: SI (character pointer), screen position variables
+[ 919]        :                                       ; Output: Single character displayed
+[ 920]        :                                       ; Modifies: AL, DI
+[ 921]        :                                       ; ========================================================================
+[ 922]    07D9:                                       shows_str_line:
+[ 923]    07D9: E8 B9 FF                              call calculate_line_and_column ; Calculate screen position
+[ 924]        :                                       
+[ 925]    07DC: 8A 04                                 mov al, [si]            ; Load character
+[ 926]    07DE: 26 88 05                              mov es:[di], al         ; Write to video memory
+[ 927]        :                                       
+[ 928]    07E1: C3                                    ret                     ; Return
+[ 929]        :                                       
+[ 930]        :                                       ; ========================================================================
+[ 931]        :                                       ; PROCEDURE: CLEAR_GUESS_ARRAY
+[ 932]        :                                       ; Description: Clears the array storing previous guesses
+[ 933]        :                                       ; Input: str_guess array
+[ 934]        :                                       ; Output: Array filled with string terminators
+[ 935]        :                                       ; Modifies: DI, str_guess array
+[ 936]        :                                       ; ========================================================================
+[ 937]    07E2:                                       clean_guess:
+[ 938]    07E2: BF 00 00                              mov di, 0               ; Initialize index
+[ 939]        :                                       
+[ 940]    07E5:                                       repeat_lmp_palp:
+[ 941]    07E5: C6 85 6C 01 24                        mov str_guess[di], "$"  ; Set terminator
+[ 942]        :                                       
+[ 943]    07EA: 83 FF 19                              cmp di, 25              ; Check if end of array reached
+[ 944]    07ED: 74 10                                 je clean_done           ; If yes, finish
+[ 945]        :                                       
+[ 946]    07EF: 47                                    inc di                  ; Move to next position
+[ 947]        :                                       
+[ 948]    07F0: EB F3                                 jmp repeat_lmp_palp     ; Continue clearing
+[ 949]        :                                       
+[ 950]        :                                       ; ========================================================================
+[ 951]        :                                       ; PROCEDURE: RESTART_GAME_HANDLER
+[ 952]        :                                       ; Description: Handles game restart input and cleanup
+[ 953]        :                                       ; Input: User keypress
+[ 954]        :                                       ; Output: Game restarted or terminated
+[ 955]        :                                       ; Modifies: AX, screen display
+[ 956]        :                                       ; ========================================================================
+[ 957]    07F2:                                       restart:
+[ 958]    07F2: B4 08                                 mov ah, 08              ; Get character input
+[ 959]    07F4: CD 21                                 int 21h                 ; Call DOS interrupt
+[ 960]        :                                       
+[ 961]    07F6: 50                                    push ax                 ; Save input character
+[ 962]    07F7: E8 98 FE                              call clean_screen       ; Clear the screen
+[ 963]    07FA: 58                                    pop ax                  ; Restore input character
+[ 964]        :                                       
+[ 965]    07FB: 57                                    push di                 ; Save DI register
+[ 966]    07FC: E8 E3 FF                              call clean_guess        ; Clear previous guesses
+[ 967]        :                                       
+[ 968]    07FF:                                       clean_done:
+[ 969]    07FF: 5F                                    pop di                  ; Restore DI register
+[ 970]    0800: E9 47 FE                              jmp the_end             ; Jump to program termination
+[ 971]        :                                       
+[ 972]        :                                       ; ========================================================================
+[ 973]        :                                       ; PROCEDURE: CONVERT_ASCII_TO_BITMAP
+[ 974]        :                                       ; Description: Converts ASCII text string to bitmap display characters
+[ 975]        :                                       ; Input: SI (pointer to ASCII string), position variables
+[ 976]        :                                       ; Output: Text displayed as bitmap characters on screen
+[ 977]        :                                       ; Modifies: AX, BX, DX, DI, SI, column_a
+[ 978]        :                                       ; ========================================================================
+[ 979]    0803:                                       ascii_to_bitmap:
+[ 980]    0803: 50                                    push ax                 ; Save AX register
+[ 981]    0804: 53                                    push bx                 ; Save BX register
+[ 982]    0805: 52                                    push dx                 ; Save DX register
+[ 983]    0806: 57                                    push di                 ; Save DI register
+[ 984]        :                                       
+[ 985]    0807:                                       repeat_ascii_to_bitmap:
+[ 986]    0807: B4 00                                 mov ah, 0               ; Clear high byte of AX
+[ 987]    0809: 8A 04                                 mov al, [si]            ; Load current character
+[ 988]    080B: 2C 41                                 sub al, 65              ; Convert to alphabet index (A=0, B=1, etc.)
+[ 989]    080D: B2 02                                 mov dl, 2               ; Each alphabet entry is 2 bytes
+[ 990]    080F: F6 E2                                 mul dl                  ; Calculate offset in alphabet array
+[ 991]        :                                       
+[ 992]    0811: 80 3C 24                              cmp [si], "$"           ; Check for string terminator
+[ 993]    0814: 74 17                                 je word_finished        ; If end of string, finish
+[ 994]    0816: 80 3C 20                              cmp [si], " "           ; Check for space character
+[ 995]    0819: 74 0B                                 je empty_space          ; If space, handle differently
+[ 996]        :                                       
+[ 997]    081B: 8B F8                                 mov di, ax              ; Store alphabet offset in DI
+[ 998]        :                                       
+[ 999]    081D: 56                                    push si                 ; Save string pointer
+[1000]    081E: 8B B5 F5 01                           mov si, alphabet[di]    ; Get bitmap address for character
+[1001]    0822: E8 A0 FF                              call shows_letter       ; Display the character bitmap
+[1002]    0825: 5E                                    pop si                  ; Restore string pointer
+[1003]        :                                       
+[1004]    0826:                                       empty_space:
+[1005]    0826: FF 06 53 00                           inc column_a            ; Move to next column position
+[1006]    082A: 46                                    inc si                  ; Move to next character in string
+[1007]        :                                       
+[1008]    082B: EB DA                                 jmp repeat_ascii_to_bitmap ; Continue processing string
+[1009]        :                                       
+[1010]    082D:                                       word_finished:
+[1011]    082D: 58                                    pop ax                  ; Restore AX register
+[1012]    082E: 5B                                    pop bx                  ; Restore BX register
+[1013]    082F: 5A                                    pop dx                  ; Restore DX register
+[1014]    0830: 5F                                    pop di                  ; Restore DI register
+[1015]    0831: C3                                    ret                     ; Return to caller
+[1016]        :                                       
+[1017]        :                                       ends                        ; End of code segment
+[1018]        :                                       end start                   ; End of program, entry point is 'start'
+[1019]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 32      -   bytes on last page (l.byte)
+0003: 00      -   bytes on last page (h.byte)
+0004: 06      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 01      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 01      -   SP - stack pointer (h.byte)
+0012: D7      -   check sum (l.byte)
+0013: E2      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 33      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 33      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================
